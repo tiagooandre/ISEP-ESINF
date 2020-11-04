@@ -35,7 +35,18 @@ public class GenericSortingArrays {
      * Selection Sort Algorithm
      */
     public static <E extends Comparable<E>> void selectionSort(E[] v) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        int n = v.length;
+        for (int i = 0; i < n - 1; i++) {
+            int min = i;
+            for (int j = i + 1; j < n; j++) {
+                if (v[j].compareTo(v[min]) < 0) {
+                    min = j;
+                }
+            }
+            E temp = v[min];
+            v[min] = v[i];
+            v[i] = temp;
+        }
     }
 
     /**
@@ -44,7 +55,16 @@ public class GenericSortingArrays {
      * @param v
      */
     public static <E extends Comparable<E>> void bubbleSort(E[] v) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        int num = v.length;
+        for (int i = 0; i < num - 1; i++) {
+            for (int j = 0; j < num - i - 1; j++) {
+                if (v[j].compareTo(v[j + 1]) > 0) {
+                    E temp = v[j];
+                    v[j] = v[j + 1];
+                    v[j + 1] = temp;
+                }
+            }
+        }
     }
 
     /**
