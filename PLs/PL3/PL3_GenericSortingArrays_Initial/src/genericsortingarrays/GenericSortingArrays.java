@@ -90,10 +90,17 @@ public class GenericSortingArrays {
         int nR = S2.length;
         int i = 0, j = 0, k = 0;
         while (i < nL && j < nR) {
-            if (S1[i].compareTo(S2[j]) <= 0) {
+            if (S1[i].compareTo(S2[j]) < 0) {
                 S[k] = S1[i];
                 i++;
-            } else {
+            } else if (S1[i].compareTo(S2[j]) > 0) {
+                S[k] = S2[j];
+                j++;
+            }
+            else {
+                S[k] = S1[i];
+                i++;
+                k++;
                 S[k] = S2[j];
                 j++;
             }
@@ -113,18 +120,16 @@ public class GenericSortingArrays {
 
     public static <E extends Comparable<E>> void mergeSort(E[] S) {
         int n = S.length;
-        if (n < 2)
-            return;
-        int mid = n / 2;
-        E[] left = (E[]) new Object[mid];
-        E[] right = (E[]) new Object[n - mid];
-        for (int i = 0; i < mid; i++)
-            left[i] = S[i];
-        for (int i = mid; i < n; i++)
-            right[i - mid] = S[i];
-        mergeSort(left);
-        mergeSort(right);
-        merge(left, right, S);
+        if (n >= 2) {
+            int mid = n / 2;
+            E[] S1 = Arrays.copyOfRange(S, 0, mid);
+            E[] S2 = Arrays.copyOfRange(S, mid, n);
+
+            mergeSort(S1);
+            mergeSort(S2);
+
+            merge(S1, S2, S);
+        }
     }
 
     /**
