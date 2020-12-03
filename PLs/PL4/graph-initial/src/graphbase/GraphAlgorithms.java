@@ -26,21 +26,19 @@ public class GraphAlgorithms {
         }
 
         LinkedList<V> qbfs = new LinkedList<>();
-        ArrayList<V> qaux = new ArrayList<>();
-        boolean[] visited = new boolean[g.numVertices()];
+        LinkedList<V> qaux = new LinkedList<>();
+
         qbfs.add(vert);
         qaux.add(vert);
-        visited[g.getKey(vert)] = true;
+
         while (!qaux.isEmpty()) {
-            V vInf = qaux.remove(0);
-            for (V vAdj : g.adjVertices(vInf)) {
-                if (!visited[g.getKey(vAdj)]) {
+            vert = qaux.remove(0);
+            for (V vAdj : g.adjVertices(vert)) {
+                if (!qbfs.contains(vAdj)) {
                     qbfs.add(vAdj);
                     qaux.add(vAdj);
-                    visited[g.getKey(vAdj)] = true;
                 }
             }
-
         }
         return qbfs;
     }
@@ -52,13 +50,15 @@ public class GraphAlgorithms {
    * @param visited set of discovered vertices
    * @param qdfs queue with vertices of depth-first search
    */
-    private static<V,E> void DepthFirstSearch(Graph<V,E> g, V vOrig, LinkedList<V> qdfs, boolean[] visited) { //Adicionei o visited como parâmetro porque não existia mas penso que seja necessário
+    private static<V,E> void DepthFirstSearch(Graph<V,E> g, V vOrig, boolean[] visited, LinkedList<V> qdfs) {
         qdfs.add(vOrig);
-        visited[g.getKey(vOrig)] = true;
+        int vKey = g.getKey(vOrig);
+        visited[vKey] = true;
 
         for (V vAdj : g.adjVertices(vOrig)) {
-            if (!visited[g.getKey(vAdj)]) {
-                DepthFirstSearch(g, vAdj, qdfs, visited);
+            vKey = g.getKey(vAdj);
+            if (!visited[vKey]) {
+                DepthFirstSearch(g, vAdj, visited, qdfs);
             }
         }
     }
@@ -75,17 +75,9 @@ public class GraphAlgorithms {
 
         LinkedList<V> qdfs = new LinkedList<>();
         boolean[] visited = new boolean[g.numVertices()];
-        qdfs.add(vert);
-        visited[g.getKey(vert)] = true;
-        for (V vAdj : g.adjVertices(vert)) {
-            if (!g.validVertex(vAdj)) {
-                return null;
-            }
 
-            if (!visited[g.getKey(vAdj)]) {
-                DepthFirstSearch(g, vAdj, qdfs, visited);
-            }
-        }
+        DepthFirstSearch(g, vert, visited, qdfs);
+
         return qdfs;
     }
    
@@ -100,21 +92,26 @@ public class GraphAlgorithms {
    */
     private static<V,E> void allPaths(Graph<V,E> g, V vOrig, V vDest, boolean[] visited, LinkedList<V> path, ArrayList<LinkedList<V>> paths) {
 
-        visited[g.getKey(vOrig)] = true;
         path.push(vOrig);
+        int vKey = g.getKey(vOrig);
+        visited[vKey] = true;
+
         for (V vAdj : g.adjVertices(vOrig)) {
             if (vAdj.equals(vDest)) {
-                path.push(vDest);
-                paths.add(path);
+                path.push(vAdj);
+                LinkedList<V> revpath = revPath(path);
+                paths.add(new LinkedList(revpath)); //save clone of reverse path
                 path.pop();
             } else {
-                if (!visited[g.getKey(vAdj)]) {
+                vKey = g.getKey(vAdj);
+                if (!visited[vKey]) {
                     allPaths(g, vAdj, vDest, visited, path, paths);
                 }
             }
         }
-        V vertex = path.pop();
-        visited[g.getKey(vertex)] = false;
+        V vElem = path.pop();
+        vKey = g.getKey(vElem);
+        visited[vKey] = false;
     }
     
    /**
@@ -131,9 +128,11 @@ public class GraphAlgorithms {
         ArrayList<LinkedList<V>> paths = new ArrayList<>();
         LinkedList<V> path = new LinkedList<>();
         boolean[] visited = new boolean[g.numVertices()];
+
         if (g.validVertex(vOrig) && g.validVertex(vDest)) {
             allPaths(g, vOrig, vDest, visited, path, paths);
         }
+
         return paths;
     }
     
@@ -147,28 +146,32 @@ public class GraphAlgorithms {
    * @param pathkeys minimum path vertices keys  
    * @param dist minimum distances
    */
-    protected static<V,E> void shortestPathLength(Graph<V,E> g, V vOrig,
-                                    boolean[] visited, int[] pathKeys, double[] dist){
-//        dist[g.getKey(vOrig)] = 0;
-//        while (vOrig != null) {
-//            visited[g.getKey(vOrig)] = true;
-//            for (V vAdj : g.adjVertices(vOrig)) {
-//                Edge e = g.getEdge(vOrig, vAdj);
-//                if (!visited[g.getKey(vAdj)] && dist[g.getKey(vAdj)] > (dist[g.getKey(vOrig)] + e.getWeight())) {
-//                    dist[g.getKey(vAdj)] = dist[g.getKey(vOrig)] + e.getWeight();
-//                    pathKeys[g.getKey(vAdj)] = g.getKey(vOrig);
-//                }
-//            }
-//            vOrig = null;
-//            Double minDistance = Double.MAX_VALUE;
-//            for (V vert : g.vertices()) {
-//                if (!visited[g.getKey(vert)] && dist[g.getKey(vert)] < minDistance) {
-//                    vOrig = vert;
-//                    minDistance = dist[g.getKey(vert)];
-//                }
-//            }
-//        }
-        throw new UnsupportedOperationException("Not supported yet.");
+    protected static<V,E> void shortestPathLength(Graph<V,E> g, V vOrig, V[] vertices, boolean[] visited, int[] pathKeys, double[] dist) {
+        int vKey = g.getKey(vOrig);
+        dist[vKey] = 0;
+        while (vKey != -1) {
+            vOrig = vertices[vKey];
+            visited[vKey] = true;
+
+            for (V vAdj : g.adjVertices(vOrig)) {
+                int vKeyAdj = g.getKey(vAdj);
+                Edge<V, E> edge = g.getEdge(vOrig, vAdj);
+
+                if (!visited[vKeyAdj] && dist[vKeyAdj] > dist[vKey] + edge.getWeight()) {
+                    dist[vKeyAdj] = dist[vKey] + edge.getWeight();
+                    pathKeys[vKeyAdj] = vKey;
+                }
+            }
+            Double minDist = Double.MAX_VALUE;
+            vKey = -1;
+
+            for (int i = 0; i < g.numVertices(); i++) {
+                if (visited[i] == false && dist[i] < minDist) {
+                    minDist = dist[i];
+                    vKey = i;
+                }
+            }
+        }
     }
     
     /**
@@ -180,26 +183,84 @@ public class GraphAlgorithms {
     * @param pathkeys minimum path vertices keys  
     * @param path stack with the minimum path (correct order)
     */
-    protected static<V,E> void getPath(Graph<V,E> g, V vOrig, V vDest, V[] pathKeys, LinkedList<V> path){
-//        path.push(vDest);
-//        V vKey = pathKeys[g.getKey(vDest)];
-//        if (vKey != -1) {
-//            vDest = verts[vKey];
-//            getPath(g, vOrig, vDest, verts, pathKeys, path);
-//        }
-        throw new UnsupportedOperationException("Not supported yet.");
+    protected static<V,E> void getPath(Graph<V,E> g, V vOrig, V vDest, V[] verts, int[] pathKeys, LinkedList<V> path) { //Tive que acrescentar parâmetros
+        if (!vOrig.equals(vDest)) {
+            path.push(vDest);
+            int vKey = g.getKey(vDest);
+            int prevVKey = pathKeys[vKey];
+            vDest = verts[prevVKey];
+
+            getPath(g, vOrig, vDest, verts, pathKeys, path);
+        } else {
+            path.push(vOrig);
+        }
     }
 
     //shortest-path between vOrig and vDest
     public static<V,E> double shortestPath(Graph<V,E> g, V vOrig, V vDest, LinkedList<V> shortPath){
+        if (!g.validVertex(vOrig) || !g.validVertex(vDest)) {
+            return 0;
+        }
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        int nverts = g.numVertices();
+        boolean[] visited = new boolean[nverts];
+        int[] pathKeys = new int[nverts];
+        double[] dist = new double[nverts];
+        V[] vertices = g.getAllKeys();
+
+        for (int i = 0; i < nverts; i++) {
+            dist[i] = Double.MAX_VALUE;
+            pathKeys[i] = -1;
+        }
+
+        shortestPathLength(g, vOrig, vertices, visited, pathKeys, dist);
+
+        double lengthPath = dist[g.getKey(vDest)];
+
+        if (lengthPath != Double.MAX_VALUE) {
+            getPath(g, vOrig, vDest, vertices, pathKeys, shortPath);
+            return lengthPath;
+        }
+
+        return 0;
     }
    
     //shortest-path between voInf and all other
-    public static<V,E> boolean shortestPaths(Graph<V,E> g, V vOrig, ArrayList<LinkedList<V>> paths, ArrayList<Double> dists){
-      
-        throw new UnsupportedOperationException("Not supported yet.");
+    public static<V,E> boolean shortestPaths(Graph<V,E> g, V vOrig, ArrayList<LinkedList<V>> paths, ArrayList<Double> dists) {
+        if (!g.validVertex(vOrig)) {
+            return false;
+        }
+
+        int nverts = g.numVertices();
+        boolean[] visited = new boolean[nverts];
+        int[] pathKeys = new int[nverts];
+        double[] dist = new double[nverts];
+        V[] vertices = g.getAllKeys();
+
+        for (int i = 0; i < nverts; i++) {
+            dist[i] = Double.MAX_VALUE;
+            pathKeys[i] = -1;
+        }
+
+        shortestPathLength(g, vOrig, vertices, visited, pathKeys, dist);
+
+        dists.clear();
+        paths.clear();
+
+        for (int i = 0; i < nverts; i++) {
+            paths.add(null);
+            dists.add(null);
+        }
+
+        for (int i = 0; i < nverts; i++) {
+            LinkedList<V> shortPath = new LinkedList<>();
+            if (dist[i] != Double.MAX_VALUE) {
+                getPath(g, vOrig, vertices[i], vertices, pathKeys, shortPath);
+            }
+            paths.set(i, shortPath);
+            dists.set(i, dist[i]);
+        }
+        return true;
     }
     
     

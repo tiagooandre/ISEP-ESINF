@@ -42,7 +42,22 @@ public class Graph<V,E> implements GraphInterface<V,E> {
         return true;
     }
     
-    public int getKey(V vert) { return vertices.get(vert).getKey(); }
+    public int getKey(V vert) {
+        return vertices.get(vert).getKey();
+    }
+
+    public V[] getAllKeys() {
+        V  vertElem = null;
+        for (Vertex<V,E> vert : vertices.values())
+            vertElem = vert.getElement() ;            // To get type
+
+        V[] keyverts = (V [])Array.newInstance(vertElem.getClass(), numVert);
+
+        for (Vertex<V,E> vert : vertices.values())
+            keyverts[vert.getKey()]=vert.getElement();
+
+        return keyverts;
+    }
     
     public Iterable<V> adjVertices(V vert){ 
         
@@ -59,15 +74,14 @@ public class Graph<V,E> implements GraphInterface<V,E> {
     
     
     public Iterable<Edge<V,E>> edges() {
-        ArrayList<Edge<V,E>> allEdges = new ArrayList<>();
+        LinkedList<Edge<V,E>> listEdge = new LinkedList<>();
 
-        for (Vertex<V, E> vertex : this.vertices.values()) {
-            Iterable<Edge<V, E>> edges = vertex.getAllOutEdges();
-            for (Edge<V, E> edge: edges) {
-                allEdges.add(edge);
+        for (Vertex<V, E> vertex : vertices.values()) {
+            for (Edge<V, E> edge: vertex.getAllOutEdges()) {
+                listEdge.add(edge);
             }
         }
-        return allEdges;
+        return listEdge;
     }
     
     public Edge<V,E> getEdge(V vOrig, V vDest){
@@ -140,17 +154,19 @@ public class Graph<V,E> implements GraphInterface<V,E> {
     }
     
     public Iterable<Edge<V,E>> incomingEdges(V vert) {
-        ArrayList<Edge<V, E>> incomingEdges = new ArrayList<>();
+        if (!validVertex(vert)) {
+            return null;
+        }
 
-        if (vertices.containsKey(vert)) {
-            Iterable<Edge<V, E>> allEdges = this.edges();
-            for (Edge<V, E> edge : allEdges) {
-                if (edge.getVDest().equals(vert)) {
-                    incomingEdges.add(edge);
-                }
+        ArrayList<Edge<V, E>> edges = new ArrayList<>();
+
+        for (V othervert : vertices.keySet()) {
+            Edge<V, E> edge = getEdge(othervert, vert);
+            if (edge != null) {
+                edges.add(edge);
             }
         }
-        return incomingEdges;
+        return edges;
     }
             
     public boolean insertVertex(V vert){
