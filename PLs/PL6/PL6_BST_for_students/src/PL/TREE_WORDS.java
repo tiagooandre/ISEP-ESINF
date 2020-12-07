@@ -3,11 +3,7 @@ package PL;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  *
@@ -35,9 +31,23 @@ public class TREE_WORDS extends BST<TextWord> {
         root = insert(element, root);
     }
     
-    private Node<TextWord> insert(TextWord element, Node<TextWord> node){
-        throw new UnsupportedOperationException("Not supported yet.");
+    private Node<TextWord> insert(TextWord element, Node<TextWord> node) {
+        if (node == null) {
+            return new Node(element, null, null);
+        }
 
+        if (node.getElement().compareTo(element) < 0) {
+            node.setRight(insert(element, node.getRight()));
+            return node;
+        }
+
+        if (node.getElement().compareTo(element) > 0) {
+            node.setLeft(insert(element, node.getLeft()));
+            return node;
+        }
+
+        node.getElement().incOcorrences();
+        return node;
     }
 
     /**
@@ -45,8 +55,15 @@ public class TREE_WORDS extends BST<TextWord> {
      * @return a map with a list of words for each occurrence found.
      */
     public Map<Integer,List<String>> getWordsOccurrences(){
-        throw new UnsupportedOperationException("Not supported yet.");
-
+        Map<Integer,List<String>> map = new HashMap<>();
+        for(TextWord tx : inOrder()) {
+            int numberOfOcorrences = tx.getOcorrences();
+            if(!map.containsKey(numberOfOcorrences)) {
+                map.put(numberOfOcorrences, new ArrayList<String>());
+            }
+            map.get(numberOfOcorrences).add(tx.getWord());
+        }
+        return map;
     }
 
 }
